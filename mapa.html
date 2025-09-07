@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Mapas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet.js para mapas -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Leaflet Awesome Markers para iconos personalizados -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        #map { height: 600px; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <nav class="bg-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="index.html" class="flex items-center text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
+                <i class="fa fa-bar-chart text-blue-500 mr-3"></i>
+                <span>Visualizador de Datos</span>
+            </a>
+            <div class="relative">
+                <button id="btn-menu" class="px-4 py-2 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-500 font-semibold focus:outline-none flex items-center">
+                    <span>Visualizaciones</span>
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="main-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 hidden">
+                    <a href="index.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Gráficas</a>
+                    <a href="mapa.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Mapas</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto mt-8 p-4 bg-white rounded-lg shadow-lg">
+        <h2 class="text-xl font-bold mb-4">1. Cargar Archivo con Coordenadas</h2>
+        <div class="border-2 border-dashed border-gray-300 p-6 rounded-md text-center mb-6">
+            <label for="input-file-map" class="cursor-pointer">
+                <span class="text-blue-500 font-medium">Seleccionar un archivo (con columnas 'latitud' y 'longitud')</span>
+                <input type="file" id="input-file-map" accept=".xlsx, .xls" class="hidden">
+            </label>
+        </div>
+
+        <!-- Opciones del Mapa -->
+        <div id="map-options-container" class="hidden mt-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+            <h3 class="text-lg font-semibold mb-3">Selecciona las Columnas</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label for="lat-column-select" class="block text-sm font-medium text-gray-700">Columna de Latitud:</label>
+                    <select id="lat-column-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"></select>
+                </div>
+                <div>
+                    <label for="lon-column-select" class="block text-sm font-medium text-gray-700">Columna de Longitud:</label>
+                    <select id="lon-column-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"></select>
+                </div>
+                <div>
+                    <label for="name-column-select" class="block text-sm font-medium text-gray-700">Columna de Nombre del Punto:</label>
+                    <select id="name-column-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"></select>
+                </div>
+            </div>
+            <div class="mt-4 border-t border-gray-200 pt-4">
+                <h3 class="text-lg font-semibold mb-3">Personalizar Marcadores</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="marker-color-select" class="block text-sm font-medium text-gray-700">Color del Marcador:</label>
+                        <select id="marker-color-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                            <option value="blue" selected>Azul</option>
+                            <option value="red">Rojo</option>
+                            <option value="green">Verde</option>
+                            <option value="orange">Naranja</option>
+                            <option value="purple">Morado</option>
+                            <option value="black">Negro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="marker-icon-select" class="block text-sm font-medium text-gray-700">Icono del Marcador (de FontAwesome):</label>
+                        <select id="marker-icon-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                            <option value="info-circle" selected>Información</option>
+                            <option value="star">Estrella</option>
+                            <option value="flag">Bandera</option>
+                            <option value="cog">Engranaje</option>
+                            <option value="home">Casa</option>
+                            <option value="circle">Círculo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button id="btn-plot-map" class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600">Graficar Puntos en Mapa</button>
+            </div>
+        </div>
+
+        <!-- Barra de Búsqueda y Exportación -->
+        <div id="map-actions-container" class="hidden my-6 flex items-end justify-between">
+            <div>
+                <label for="search-input" class="block text-sm font-medium text-gray-700">Buscar Punto por Nombre:</label>
+                <div class="mt-1 flex rounded-md shadow-sm">
+                    <input type="text" id="search-input" class="flex-1 block w-full rounded-none rounded-l-md border-gray-300 p-2" placeholder="Escribe el nombre exacto del punto...">
+                    <button id="btn-search-map" class="inline-flex items-center px-4 py-2 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 font-semibold">
+                        Buscar
+                    </button>
+                </div>
+            </div>
+            <button id="btn-export-map" class="px-4 py-2 bg-green-500 text-white font-semibold rounded-md hover:bg-green-600">
+                Exportar Mapa a PNG
+            </button>
+        </div>
+
+        <h2 class="text-xl font-bold mb-4">2. Visualización del Mapa</h2>
+        <div id="map" class="border border-gray-300 rounded-lg"></div>
+    </main>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script type="module" src="./controllers/map-controller.js"></script>
+</body>
+</html>
